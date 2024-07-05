@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>五子棋遊戲</title>
+    <style>
+        body {
+            background-color: #f3e5ab; /* 背景色為鵝黃色 */
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        canvas {
+            border: 1px solid black;
+            background-color: #8b5a2b; /* 棋盤背景色為木頭色 */
+        }
+
+        .center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <canvas id="gomoku" width="600" height="600"></canvas>
+        <button onclick="resetGame()">重新開始</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gomoku');
+        const context = canvas.getContext('2d');
+        const size = 15;
+        const gridSize = canvas.width / (size - 1);
+        let board = Array(size).fill().map(() => Array(size).fill(null));
+        let currentPlayer = 'black';
+
+        function drawBoard() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#8b5a2b'; // 木頭色
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            context.strokeStyle = '#f3e5ab'; // 鵝黃色
+            context.lineWidth = 2;
+            for (let i = 0; i < size; i++) {
+                context.beginPath();
+                context.moveTo(i * gridSize, 0);
+                context.lineTo(i * gridSize, canvas.height);
+                context.stroke();
+                context.beginPath();
+                context.moveTo(0, i * gridSize);
+                context.lineTo(canvas.width, i * gridSize);
+                context.stroke();
+            }
+        }
+
+        function drawPiece(x, y, color) {
+            context.clearRect(x * gridSize - gridSize / 2, y * gridSize - gridSize / 2, gridSize, gridSize);
+
+            // Draw the piece with shadow for a 3D effect
+            context.beginPath();
+            context.arc(x * gridSize, y * gridSize, gridSize / 2 - 2, 0, 2 * Math.PI);
+            
+            if (color === 'black') {
+                context.shadowColor = 'rgba(0, 0, 0, 0.8)';  // 黑棋陰影顏色
+            } else if (color === 'white') {
+                context.shadowColor = 'rgba(255, 255, 255, 0.8)';  // 白棋陰影顏色，更淺的陰影顏色
+            }
+            
+            context.shadowBlur = 8;  // 調整陰影模糊度，使白棋更立體
+            context.fillStyle = color;
+            context.fill();
+            context.shadowBlur = 0;  // Reset shadow for other elements
+        }
+
+        function resetGame() {
+            board = Array(size).fill().map(() => Array(size).fill(null));
+            currentPlayer = 'black';
+            drawBoard();
+        }
+
+        function checkWin(x, y) {
+            function count(dirX, dirY) {
+                let count = 0;
+                let i = 1;
+                while (true) {
+                    const nx = x + i * dirX;
+                    const ny = y + i * dirY;
+                    if (nx >= 0 && ny >= 0 && nx < size && ny < size && board[nx][ny] === currentPlayer) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                    i++;
+                }
+                return count;
+            }
+
+            const directions = [
+                [1, 0], [0, 1], [1, 1], [1, -1]
+            ];
+            for (const [dirX, dirY] of directions) {
+                if (count(dirX, dirY) + count(-dirX, -dirY) >= 4) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((event.clientX - rect.left + gridSize / 2) / gridSize);
+            const y = Math.floor((event.clientY - rect.top + gridSize / 2) / gridSize);
+
+            if (board[x][y] === null) {
+                board[x][y] = currentPlayer;
+                drawPiece(x, y, currentPlayer === 'black' ? 'black' : 'white');
+
+                if (checkWin(x, y)) {
+                    winner = currentPlayer;
+                    setTimeout(() => {
+                        alert(`${winner === 'black' ? '黑棋' : '白棋'} 贏了！`);
+                        resetGame();
+                    }, 100);
+                }
+
+                currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+            }
+        });
+
+        drawBoard();
+    </script>
+</body>
+</html>
